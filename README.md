@@ -1,10 +1,11 @@
 # Central Authentication Service (CAS) [![License](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/Jasig/cas/blob/master/LICENSE)
 
 ## Introduction
-This branch hosts the [Docker](https://www.docker.com/) build configuration necessary to build a CAS image. See the `Dockerfile` for more info. 
+This branch hosts the [Docker](https://www.docker.com/) build configuration to run CAS with predefined users over http or https. See the `Dockerfile` for more info.
 
-## Versions
-A docker image for CAS server. Images are tagged to match CAS server releases.
+## Disclaimer
+This README.md was changed by https://github.com/sergiofbsilva.
+Use it at your own risk.
 
 ## Requirements
 * Minimum of Docker version `1.9.x`
@@ -12,56 +13,47 @@ A docker image for CAS server. Images are tagged to match CAS server releases.
 ## Configuration
 
 ### Image
-* The image will be available on the host via ports `80` and `443`
-* The image may be accessed via the host browser at the container-provided IP address. You may determine the IP address via `docker inspect $CONTAINER_ID`
-
-* The CAS server will be deployed inside an embedded [Jetty container](http://www.eclipse.org/jetty/) that is built into the [CAS overlay project](http://bit.ly/1PPY47q).
+* The image will be available on the host via ports `8080` and `8443`
+* The image may be accessed via the host browser
 
 ## CAS Overlay
 * The build will automatically copy the contents of the `src\main\webapp` to the docker image. 
-* You can set up your own custom overlay project based on a directory structure that mimics that of the CAS web application itself. 
  
 ### SSL
-* Update the `thekeystore` file with the server certificate and chain if you need access the CAS server via HTTPS. 
+* The default keystore is `etc/thekeystore`.
 * The password for the keystore is `changeit`.
-* The build will automatically copy the keystore file to the image
-* The embedded Jetty is pre-configured to use that keystore for HTTPS requests.
-
-## Build
-
-Start Docker:
-
-```bash
-docker-machine start
-docker-machine env
-```
-
-Run the `eval` command next.
-
-**Make sure** that both `build.sh` and `run.sh` are updated to build the appropriate tag. Docker tags MUST correspond
-to CAS server versions. 
-
-```bash
-./build.sh $CasVersion
-```
-
-The image will be built as `apereo/cas:v$CasVersion`.
+* It has a self-signed certificate for the name `docker.local`
+    * update `/etc/hosts` using the following command line instruction
+        * `sudo echo "$(docker-machine ip) docker.local" > /etc/hosts`   
+* You can install `etc/jetty.cer` in your prefered browser so that it recognizes the self-signed certificate.
+    - MacOSX instructions
+        1. On MacOsX just run `open etc/jetty.cer`
+        2. The `KeyChain` opens and asks to import file
+        3. Choose `System`
+        4. Search for `docker.local` and double-click it
+        5. Expand `Trust` + SSL , set always trust
 
 ## Run
 
 ```bash
-./run.sh $CasVersion
+#docker run -p 8080:8080 -p 8443:8443 -d --name="cas" sergiofbsilva/cas-dev
+./run.sh
 ```
 
-## Release
-* New images shall be released at the time of a new CAS server release.
-* Image versions are reflected in the `build|run.sh` files and need to be updated per CAS/Image release.
-* Images are published to [https://hub.docker.com/r/apereo/cas/](https://hub.docker.com/r/apereo/cas/)
-* Log into the Docker Hub via the following command:
+## Usage
 
-```bash
-docker-machine ssh default
-docker login -u username -p password -e email
-docker push apereo/cas:v$CasVersion
+### Users
+You can login using any of the users defined in `cas.properties`.
+Just search for the following line if you need to change it
+
+```
+#accept.authn.users=user1::password1,user2::password2 ...
+accept.authn.users=admin1::admin1,admin2::admin2,admin3::admin3
 ```
 
+### Services
+This setup accepts any service URL (http or https)
+
+#### Example
+
+`https://docker.local:8443/cas/login?service=https://localhost:8443/login/cas`

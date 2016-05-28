@@ -1,0 +1,5 @@
+keytool -genkey -keyalg RSA -alias jetty -keystore etc/thekeystore -storepass changeit
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain etc/jetty.cer
+keytool -export -keystore etc/thekeystore -storepass changeit -alias jetty -file etc/jetty.cer
+
+
